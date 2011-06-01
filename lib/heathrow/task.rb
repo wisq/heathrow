@@ -3,8 +3,11 @@ require 'heathrow'
 require 'statemachine'
 
 class Heathrow::Task
-  def self.new(git_repo, git_id)
-    machine = Statemachine.build do
+  def initialize(git_repo, git_id)
+    @git_repo = git_repo
+    @git_id   = git_id
+
+    @state = Statemachine.build do
       trans :pending, :start, :incoming
 
       state :incoming do
@@ -40,36 +43,28 @@ class Heathrow::Task
       end
 
       state :done
+      context self
     end
-    machine.context = Context.new(machine, git_repo, git_id)
-    machine
   end
 
-  class Context
-    def initialize(state, git_repo, git_id)
-      @state    = state
-      @git_repo = git_repo
-      @git_id   = git_id
-    end
+  def id
+    @id ||= generate_id
+  end
 
-    def id
-      @id ||= generate_id
-    end
+  def check_source
+    repo_local? ? @state.source_local : @state.source_remote
+  end
 
-    def check_source
-      repo_local? ? @state.source_local : @state.source_remote
-    end
+  def repo_local?
+    @git_repo.end_with?('_local')
+  end
 
-    def repo_local?
-      @git_repo.end_with?('_local')
-    end
+  private
 
-    private
-
-    def generate_id
-      now = Time.now
-      parts = [now.to_i, now.usec, $$, rand(16**8)]
-      parts.map {|i| i.to_s(16)}.join('-')
-    end
+  # Not a UUID because emphasis is on local uniqueness.
+  def generate_id
+    now = Time.now
+    parts = [now.to_i, now.usec, $$, rand(16**8)]
+    parts.map {|i| i.to_s(16)}.join('-')
   end
 end
