@@ -1,0 +1,16 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    minitest (2.1.0)
+    mocha (0.9.12)
+    redis (2.2.0)
+    statemachine (1.1.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  minitest
+  mocha
+  redis
+  statemachine
