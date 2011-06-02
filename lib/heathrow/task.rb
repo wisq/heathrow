@@ -3,6 +3,10 @@ require 'heathrow'
 require 'statemachine'
 
 class Heathrow::Task
+  def self.find(id)
+    Marshal.load(Heathrow.store.get("task-#{id}"))
+  end
+
   def initialize(git_repo, git_id)
     @git_repo = git_repo
     @git_id   = git_id
@@ -57,6 +61,10 @@ class Heathrow::Task
 
   def repo_local?
     @git_repo.end_with?('_local')
+  end
+
+  def save
+    Heathrow.store.set("task-#{id}", Marshal.dump(self))
   end
 
   private
