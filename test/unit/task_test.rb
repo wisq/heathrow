@@ -5,8 +5,8 @@ require 'heathrow/task'
 
 class TaskTest < TestHelper
   def setup
-    @task = Heathrow::Task.new('foo', 'abc123')
-    Heathrow.store = mock
+    @task  = Heathrow::Task.new('foo', 'abc123')
+    @store = Heathrow.store = mock
   end
 
   test "local remote is considered local" do
@@ -25,9 +25,9 @@ class TaskTest < TestHelper
   end
 
   test "save saves to store" do
-    @task.expects(:id).returns('some-id')
+    @task.expects(:id).returns('abc123')
     Marshal.expects(:dump).with(@task).returns('marshalled-task')
-    Heathrow.store.expects(:set).with('task-some-id', 'marshalled-task')
+    @store.expects(:set).with('task:abc123', 'marshalled-task')
 
     @task.save
   end
@@ -37,16 +37,16 @@ class TaskTest < TestHelper
     Marshal.expects(:dump).with(@task) do |task|
       stored_id = task.dup.id
     end
-    Heathrow.store.stubs(:set)
+    @store.stubs(:set)
 
     @task.save
     assert_equal @task.id, stored_id
   end
 
   test "find loads task from store" do
-    Heathrow.store.expects(:get, 'task-some-id').returns('marshalled-task')
+    @store.expects(:get).with('task:abc123').returns('marshalled-task')
     Marshal.expects(:load).with('marshalled-task').returns(:some_task)
 
-    assert_equal :some_task, Heathrow::Task.find('some-id')
+    assert_equal :some_task, Heathrow::Task.find('abc123')
   end
 end

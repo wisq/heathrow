@@ -3,7 +3,7 @@ require 'minitest/autorun'
 require 'test_helper'
 require 'heathrow'
 
-class QueueTest < TestHelper
+class HeathrowTest < TestHelper
   def setup
     Heathrow.store = nil
   end

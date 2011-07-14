@@ -4,7 +4,7 @@ require 'statemachine'
 
 class Heathrow::Task
   def self.find(id)
-    Marshal.load(Heathrow.store.get("task-#{id}"))
+    Marshal.load(Heathrow.store.get("task:#{id}"))
   end
 
   def initialize(git_repo, git_id)
@@ -64,7 +64,7 @@ class Heathrow::Task
   end
 
   def save
-    Heathrow.store.set("task-#{id}", Marshal.dump(self))
+    Heathrow.store.set("task:#{id}", Marshal.dump(self))
   end
 
   private
