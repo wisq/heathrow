@@ -7,6 +7,7 @@ class TaskTest < TestHelper
   def setup
     @task  = Heathrow::Task.new('/path/to/foo', 'abc123')
     @store = Heathrow.store = mock
+    @repo  = Heathrow.repository = mock
   end
 
   test "remote is considered local by consulting Git module" do

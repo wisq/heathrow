@@ -3,7 +3,7 @@ require 'redis'
 
 module Heathrow
   class << self
-    attr_accessor :store
+    attr_accessor :store, :repository
 
     def store
       @store ||= Redis.new
