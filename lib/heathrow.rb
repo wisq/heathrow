@@ -13,3 +13,4 @@ end
 
 require 'heathrow/task'
 require 'heathrow/git'
+require 'heathrow/tree'
