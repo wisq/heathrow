@@ -12,3 +12,4 @@ module Heathrow
 end
 
 require 'heathrow/task'
+require 'heathrow/git'

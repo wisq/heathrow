@@ -60,7 +60,7 @@ class Heathrow::Task
   end
 
   def repo_local?
-    @git_repo.end_with?('_local')
+    Heathrow::Git.repo_local?(@git_repo)
   end
 
   def save

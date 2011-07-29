@@ -5,18 +5,17 @@ require 'heathrow/task'
 
 class TaskTest < TestHelper
   def setup
-    @task  = Heathrow::Task.new('foo', 'abc123')
+    @task  = Heathrow::Task.new('/path/to/foo', 'abc123')
     @store = Heathrow.store = mock
   end
 
-  test "local remote is considered local" do
-    task = Heathrow::Task.new('foo_local', 'abc123')
-    assert task.repo_local?
-  end
+  test "remote is considered local by consulting Git module" do
+    Heathrow::Git.expects(:repo_local?).with('/path/to/foo').returns(true)
+    assert @task.repo_local?
 
-  test "other remote is considered remote" do
-    task = Heathrow::Task.new('foo', 'abc123')
-    assert !task.repo_local?
+    Heathrow::Git.expects(:repo_local?).with('git@github.com:/path/to/remote').returns(false)
+    remote = Heathrow::Task.new('git@github.com:/path/to/remote', 'abc123')
+    assert !remote.repo_local?
   end
 
   test "id is a unique ID" do
