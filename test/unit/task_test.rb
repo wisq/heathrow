@@ -49,4 +49,33 @@ class TaskTest < TestHelper
 
     assert_equal :some_task, Heathrow::Task.find('abc123')
   end
+
+  test "queue_remote_fetch queues task" do
+    Heathrow::Queue.remote_fetch_queue.expects(:<<).with(@task)
+    @task.queue_remote_fetch
+  end
+
+  test "queue_local_fetch queues task" do
+    Heathrow::Queue.local_fetch_queue.expects(:<<).with(@task)
+    @task.queue_local_fetch
+  end
+
+  test "queue_bundle_check queues task" do
+    Heathrow::Queue.bundle_check_queue.expects(:<<).with(@task)
+    @task.queue_bundle_check
+  end
+
+  test "git_fetch fetches from a repository, tags the git ID, and marks task as fetched" do
+    @repo.expects(:fetch_repo).with('/path/to/foo')
+    @repo.expects(:add_tag).with('abc123')
+    state(@task).expects(:fetched)
+
+    @task.git_fetch
+  end
+
+  private
+
+  def state(task)
+    task.instance_variable_get(:@state)
+  end
 end

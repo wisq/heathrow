@@ -67,6 +67,24 @@ class Heathrow::Task
     Heathrow.store.set("task:#{id}", Marshal.dump(self))
   end
 
+  def queue_local_fetch
+    Heathrow::Queue.local_fetch_queue << self
+  end
+  def queue_remote_fetch
+    Heathrow::Queue.remote_fetch_queue << self
+  end
+  def queue_bundle_check
+    Heathrow::Queue.bundle_check_queue << self
+  end
+
+  def git_fetch
+    repo = Heathrow.repository
+    repo.fetch_repo(@git_repo)
+    repo.add_tag(@git_id)
+
+    @state.fetched
+  end
+
   private
 
   # Not a UUID because emphasis is on local uniqueness.
