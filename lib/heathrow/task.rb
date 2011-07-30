@@ -91,6 +91,19 @@ class Heathrow::Task
     @state.fetched
   end
 
+  def bundle_check
+    tree = Heathrow.bundle_check_tree
+    tree.git.fetch_tags(Heathrow.repository.path)
+    tree.git.checkout(tag_name)
+
+    begin
+      tree.run('bundle', 'check')
+      @state.bundle_complete
+    rescue Heathrow::Tree::CommandFailed
+      @state.bundle_incomplete
+    end
+  end
+
   private
 
   # Not a UUID because emphasis is on local uniqueness.

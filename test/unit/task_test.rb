@@ -79,6 +79,34 @@ class TaskTest < TestHelper
     @task.git_fetch
   end
 
+  test "bundle_check fetches tag from repository and marks bundle as complete if bundle check runs successfully" do
+    tree = Heathrow.bundle_check_tree = mock
+    tree.stubs(:git => (git = mock))
+    @task.stubs(:id => '123abc')
+
+    @repo.expects(:path).returns('/path/to/repo')
+    git.expects(:fetch_tags).with('/path/to/repo')
+    git.expects(:checkout).with('task-123abc')
+    tree.expects(:run).with('bundle', 'check')
+
+    state(@task).expects(:bundle_complete)
+    @task.bundle_check
+  end
+
+  test "bundle_check fetches tag from repository and marks bundle as incomplete if bundle check exits abnormally" do
+    tree = Heathrow.bundle_check_tree = mock
+    tree.stubs(:git => (git = mock))
+    @task.stubs(:id => '123abc')
+
+    @repo.expects(:path).returns('/path/to/repo')
+    git.expects(:fetch_tags).with('/path/to/repo')
+    git.expects(:checkout).with('task-123abc')
+    tree.expects(:run).with('bundle', 'check').raises(Heathrow::Tree::CommandFailed)
+
+    state(@task).expects(:bundle_incomplete)
+    @task.bundle_check
+  end
+
   private
 
   def state(task)
