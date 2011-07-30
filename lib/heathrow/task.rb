@@ -79,8 +79,8 @@ class Heathrow::Task
 
   def git_fetch
     repo = Heathrow.repository
-    repo.fetch_repo(@git_repo)
-    repo.add_tag(@git_id)
+    repo.fetch_branches(@git_repo)
+    repo.add_tag(tag_name, @git_id)
 
     @state.fetched
   end
@@ -92,5 +92,9 @@ class Heathrow::Task
     now = Time.now
     parts = [now.to_i, now.usec, $$, rand(16**8)]
     parts.map {|i| i.to_s(16)}.join('-')
+  end
+
+  def tag_name
+    "task-#{id}"
   end
 end

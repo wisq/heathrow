@@ -24,8 +24,18 @@ class Heathrow::Git
     end
   end
 
-  def fetch_repo(repo)
+  def fetch_branches(repo)
+    fetch_from_repo(repo, [])
+  end
+
+  def fetch_tags(repo)
+    fetch_from_repo(repo, ['-t'])
+  end
+
+  private
+
+  def fetch_from_repo(repo, options)
     remote = self.class.remote_name_for(repo)
-    @tree.run('git', 'fetch', '-q', remote)
+    @tree.run('git', 'fetch', '-q', remote, *options)
   end
 end
