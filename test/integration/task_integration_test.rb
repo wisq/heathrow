@@ -12,15 +12,18 @@ class TaskIntegrationTest < TestHelper
   test "test using sample repository" do
     with_sample_repo do
       with_repository do
-        task = Heathrow::Task.new(@sample, 'branch1')
+        task = old_task = Heathrow::Task.new(@sample, 'branch1')
         task.start
 
-        old_task = task
         task = Heathrow::Queue.local_fetch_queue.next
         assert_equal old_task.id, task.id
 
-        skip 'not ready yet'
         task.git_fetch
+
+        task = Heathrow::Queue.bundle_check_queue.next
+        assert_equal old_task.id, task.id
+
+        # FIXME not done
       end
     end
   end

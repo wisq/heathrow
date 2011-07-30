@@ -86,7 +86,7 @@ class Heathrow::Task
   def git_fetch
     repo = Heathrow.repository
     repo.fetch_branches(@git_repo)
-    repo.add_tag(tag_name, @git_id)
+    repo.tag_remote_branch(tag_name, @git_repo, @git_id)
 
     @state.fetched
   end

@@ -34,6 +34,11 @@ class Heathrow::Git
     fetch_from_repo(repo, ['-t'])
   end
 
+  def tag_remote_branch(name, repo, branch)
+    remote = self.class.remote_name_for(repo)
+    @tree.run('git', 'tag', name, "#{remote}/#{branch}")
+  end
+
   private
 
   def fetch_from_repo(repo, options)

@@ -73,7 +73,7 @@ class TaskTest < TestHelper
   test "git_fetch fetches branches from a repository, tags the git ID with its own ID, and marks task as fetched" do
     @task.stubs(:id => 'task_id')
     @repo.expects(:fetch_branches).with('/path/to/foo')
-    @repo.expects(:add_tag).with('task-task_id', 'abc123')
+    @repo.expects(:tag_remote_branch).with('task-task_id', '/path/to/foo', 'abc123')
     state(@task).expects(:fetched)
 
     @task.git_fetch

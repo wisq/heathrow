@@ -109,6 +109,19 @@ class GitTest < TestHelper
     end
   end
 
+  test "tag_remote_branch creates a git tag for a remote's branch" do
+    with_sample_repo do
+      with_git_repo do
+        @git.fetch_branches(@sample)
+        @git.tag_remote_branch('my-tag', @sample, 'branch1')
+
+        rev = Dir.chdir(@path) { `git rev-parse my-tag` }
+        assert $?.success?, "Failed to find new tag"
+        assert_equal BRANCH_REV, rev.chomp
+      end
+    end
+  end
+
   private
 
   def with_git_repo(bare = false)
