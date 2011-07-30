@@ -1,4 +1,3 @@
-require 'bundler/setup'
 require 'redis'
 
 module Heathrow

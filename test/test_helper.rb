@@ -1,3 +1,4 @@
+require 'bundler/setup'
 require 'mocha'
 
 class TestHelper < MiniTest::Unit::TestCase

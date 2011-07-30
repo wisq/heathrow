@@ -23,6 +23,8 @@ class HeathrowTest < TestHelper
   end
 
   test "repository can be set" do
-    Heathrow.repository = Heathrow::Git.new
+    repo = mock
+    Heathrow.repository = repo
+    assert_equal repo, Heathrow.repository
   end
 end

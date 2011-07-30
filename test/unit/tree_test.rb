@@ -27,7 +27,7 @@ class TreeTest < TestHelper
     Dir.mktmpdir do |dir|
       @tree = Heathrow::Tree.new(dir)
       @path = dir
-      yield
+      Dir.chdir('/') { yield }
     end
   end
 end
