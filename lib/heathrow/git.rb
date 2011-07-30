@@ -4,6 +4,8 @@ require 'grit'
 require 'digest/sha1'
 
 class Heathrow::Git
+  class RepositoryMismatch < StandardError; end
+
   def self.repo_local?(repo)
     repo.start_with?('/')
   end
@@ -35,7 +37,15 @@ class Heathrow::Git
   private
 
   def fetch_from_repo(repo, options)
-    remote = self.class.remote_name_for(repo)
+    remote   = self.class.remote_name_for(repo)
+    existing = @repo.config["remote.#{remote}.url"]
+
+    if existing.nil?
+      @tree.run('git', 'remote', 'add', remote, repo)
+    elsif existing != repo
+      raise RepositoryMismatch, "Remote #{remote}: Expected #{repo.inspect}, got #{existing.inspect}"
+    end
+
     @tree.run('git', 'fetch', '-q', remote, *options)
   end
 end

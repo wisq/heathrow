@@ -1,4 +1,5 @@
 require 'heathrow'
+require 'heathrow/queue'
 
 require 'statemachine'
 
@@ -11,6 +12,7 @@ class Heathrow::Task
     @git_repo = git_repo
     @git_id   = git_id
 
+    task = self
     @state = Statemachine.build do
       trans :pending, :start, :incoming
 
@@ -47,7 +49,7 @@ class Heathrow::Task
       end
 
       state :done
-      context self
+      context task
     end
   end
 
@@ -75,6 +77,10 @@ class Heathrow::Task
   end
   def queue_bundle_check
     Heathrow::Queue.bundle_check_queue << self
+  end
+
+  def start
+    @state.start
   end
 
   def git_fetch

@@ -65,6 +65,11 @@ class TaskTest < TestHelper
     @task.queue_bundle_check
   end
 
+  test "start initiates task" do
+    state(@task).expects(:start)
+    @task.start
+  end
+
   test "git_fetch fetches branches from a repository, tags the git ID with its own ID, and marks task as fetched" do
     @task.stubs(:id => 'task_id')
     @repo.expects(:fetch_branches).with('/path/to/foo')

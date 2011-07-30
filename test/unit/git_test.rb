@@ -3,10 +3,11 @@ require 'minitest/autorun'
 require 'test_helper'
 require 'heathrow/git'
 
+require 'tmpdir'
+
 class GitTest < TestHelper
-  SAMPLE_REPO = File.dirname(__FILE__) + '/../data/sample.tar'
-  BRANCH_REV  = '2fe0de0e0dcf423121e0b80b01f92ed8f36e66f0'
-  TAGGED_REV  = '3df0799daa917c7fe40f723146a8a839fb6ec2c4'
+  BRANCH_REV = '2fe0de0e0dcf423121e0b80b01f92ed8f36e66f0'
+  TAGGED_REV = '3df0799daa917c7fe40f723146a8a839fb6ec2c4'
 
   def setup
     @path = @git = @sample = nil
@@ -64,9 +65,31 @@ class GitTest < TestHelper
 
         in_git_repo("git show #{BRANCH_REV} > /dev/null 2>&1")
         assert $?.success?, "Failed to find revision #{BRANCH_REV} (branch)"
+      end
+    end
+  end
 
-        in_git_repo("git show #{TAGGED_REV} > /dev/null 2>&1")
-        assert !$?.success?, "Did not expect to find revision #{TAGGED_REV} (tagged)"
+  test "fetch_branches creates remote if nonexistent" do
+    with_sample_repo do
+      with_git_repo do
+        @git.fetch_branches(@sample)
+
+        in_git_repo("git show #{BRANCH_REV} > /dev/null 2>&1")
+        assert $?.success?, "Failed to find revision #{BRANCH_REV} (branch)"
+      end
+    end
+  end
+
+  test "fetch_branches raises error if remote points to wrong repository" do
+    with_sample_repo do
+      with_git_repo do
+        Heathrow::Git.expects(:remote_name_for).with(@sample).at_least_once.returns('my-remote')
+        in_git_repo("git remote add my-remote /nonexistent")
+        assert $?.success?
+
+        assert_raises Heathrow::Git::RepositoryMismatch do
+          @git.fetch_branches(@sample)
+        end
       end
     end
   end
@@ -82,24 +105,11 @@ class GitTest < TestHelper
 
         in_git_repo("git show #{TAGGED_REV} > /dev/null 2>&1")
         assert $?.success?, "Failed to find revision #{TAGGED_REV} (tagged)"
-
-        in_git_repo("git show #{BRANCH_REV} > /dev/null 2>&1")
-        assert !$?.success?, "Did not expect to find revision #{BRANCH_REV} (branch)"
       end
     end
   end
 
   private
-
-  def with_sample_repo
-    Dir.mktmpdir do |dir|
-      system('tar', '-xf', SAMPLE_REPO, '-C', dir, '--strip-components=1')
-      raise 'tar failed' unless $?.success?
-
-      @sample = dir
-      yield
-    end
-  end
 
   def with_git_repo(bare = false)
     Dir.mktmpdir do |dir|
