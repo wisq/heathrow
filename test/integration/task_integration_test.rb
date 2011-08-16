@@ -33,12 +33,24 @@ class TaskIntegrationTest < TestHelper
   def with_repository
     Dir.mktmpdir do |dir|
       Dir.chdir(dir) do
-        system("git init -q --bare")
+        system('git init -q --bare')
         raise 'git init failed' unless $?.success?
       end
 
       Heathrow.repository = Heathrow::Git.new(dir)
       yield
     end
+  ensure
+    Heathrow.repository = nil
+  end
+
+  def with_bundle_check_tree
+    Dir.mktmpdir do |dir|
+      Heathrow.bundle_check_tree = tree = Heathrow::Tree.new(dir)
+      tree.run('git init -q')
+      yield
+    end
+  ensure
+    Heathrow.bundle_check_tree = nil
   end
 end

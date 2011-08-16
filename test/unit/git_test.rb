@@ -22,6 +22,19 @@ class GitTest < TestHelper
     assert !Heathrow::Git.repo_local?('git://example.com/path/to/repo.git/')
   end
 
+  test "initialize accepts repo as path or as Tree object" do
+    Dir.mktmpdir do |dir|
+      @path = dir
+      in_git_repo("git init -q")
+      raise 'git init failed' unless $?.success?
+
+      git1 = Heathrow::Git.new(dir)
+      git2 = Heathrow::Git.new(Heathrow::Tree.new(dir))
+      assert_equal dir, git1.path
+      assert_equal dir, git2.path
+    end
+  end
+
   test "initialize handles regular repository" do
     with_git_repo {}
   end
@@ -122,6 +135,17 @@ class GitTest < TestHelper
     end
   end
 
+  test "checkout checks out a git revision" do
+    with_sample_repo do
+      rev = Dir.chdir(@sample) { `git rev-parse HEAD^` }.chomp
+      assert_match /^[0-9a-f]+$/, rev
+
+      git = Heathrow::Git.new(@sample)
+      git.checkout(rev)
+      assert_equal rev, File.read("#{@sample}/.git/HEAD").chomp
+    end
+  end
+
   private
 
   def with_git_repo(bare = false)
@@ -141,12 +165,6 @@ class GitTest < TestHelper
 
   def in_git_repo(*command)
     Dir.chdir(@path) do
-      system(*command)
-    end
-  end
-
-  def in_sample_repo(*command)
-    Dir.chdir(@sample) do
       system(*command)
     end
   end

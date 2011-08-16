@@ -14,8 +14,12 @@ class Heathrow::Git
     (repo_local?(repo) ? 'local' : 'remote') + '-' + Digest::SHA1.hexdigest(repo)
   end
 
-  def initialize(path)
-    @tree = Heathrow::Tree.new(path)
+  def initialize(tree_or_path)
+    if tree_or_path.respond_to?(:path)
+      @tree = tree_or_path
+    else
+      @tree = Heathrow::Tree.new(tree_or_path)
+    end
 
     if File.directory?("#{path}/.git/objects")
       @repo = Grit::Repo.new(path)
@@ -24,6 +28,10 @@ class Heathrow::Git
     else
       raise ArgumentError, "Not a git repository: #{path}"
     end
+  end
+
+  def path
+    @tree.path
   end
 
   def fetch_branches(repo)
@@ -37,6 +45,10 @@ class Heathrow::Git
   def tag_remote_branch(name, repo, branch)
     remote = self.class.remote_name_for(repo)
     @tree.run('git', 'tag', name, "#{remote}/#{branch}")
+  end
+
+  def checkout(ref)
+    @tree.run('git', 'checkout', '-q', ref)
   end
 
   private

@@ -21,6 +21,21 @@ class TreeTest < TestHelper
     end
   end
 
+  test "git creates Git object using tree" do
+    with_tree do
+      Heathrow::Git.expects(:new).with(@tree).returns(git = mock)
+      assert_equal git, @tree.git
+    end
+  end
+
+  test "git memoises Git object" do
+    with_tree do
+      Heathrow::Git.expects(:new).once.with(@tree).returns(git = mock)
+      assert_equal git, @tree.git
+      assert_equal git, @tree.git
+    end
+  end
+
   private
 
   def with_tree
