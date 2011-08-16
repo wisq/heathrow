@@ -23,6 +23,10 @@ class TaskIntegrationTest < TestHelper
         task = Heathrow::Queue.bundle_check_queue.next
         assert_equal old_task.id, task.id
 
+        with_bundle_check_tree do
+          task.bundle_check
+        end
+
         # FIXME not done
       end
     end

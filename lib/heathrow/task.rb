@@ -78,6 +78,9 @@ class Heathrow::Task
   def queue_bundle_check
     Heathrow::Queue.bundle_check_queue << self
   end
+  def queue_test
+    Heathrow::Queue.test_queue << self
+  end
 
   def start
     @state.start

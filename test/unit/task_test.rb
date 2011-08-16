@@ -65,6 +65,11 @@ class TaskTest < TestHelper
     @task.queue_bundle_check
   end
 
+  test "queue_test queues task" do
+    Heathrow::Queue.test_queue.expects(:<<).with(@task)
+    @task.queue_test
+  end
+
   test "start initiates task" do
     state(@task).expects(:start)
     @task.start
