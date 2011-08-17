@@ -8,9 +8,10 @@ class Heathrow::Task
     Marshal.load(Heathrow.store.get("task:#{id}"))
   end
 
-  def initialize(git_repo, git_id)
-    @git_repo = git_repo
-    @git_id   = git_id
+  def initialize(git_repo, git_id, rake_task)
+    @git_repo  = git_repo
+    @git_id    = git_id
+    @rake_task = rake_task
 
     task = self
     @state = Statemachine.build do
@@ -105,6 +106,15 @@ class Heathrow::Task
     rescue Heathrow::Tree::CommandFailed
       @state.bundle_incomplete
     end
+  end
+
+  def run_test
+    tree = Heathrow.test_tree
+    tree.git.fetch_tags(Heathrow.repository.path)
+    tree.git.checkout(tag_name)
+
+    tree.run('rake', @rake_task)
+    @state.test_complete
   end
 
   private

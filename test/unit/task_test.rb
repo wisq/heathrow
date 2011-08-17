@@ -5,7 +5,7 @@ require 'heathrow/task'
 
 class TaskTest < TestHelper
   def setup
-    @task  = Heathrow::Task.new('/path/to/foo', 'abc123')
+    @task  = Heathrow::Task.new('/path/to/foo', 'abc123', 'test:task')
     @store = Heathrow.store = mock
     @repo  = Heathrow.repository = mock
   end
@@ -15,12 +15,12 @@ class TaskTest < TestHelper
     assert @task.repo_local?
 
     Heathrow::Git.expects(:repo_local?).with('git@github.com:/path/to/remote').returns(false)
-    remote = Heathrow::Task.new('git@github.com:/path/to/remote', 'abc123')
+    remote = Heathrow::Task.new('git@github.com:/path/to/remote', 'abc123', 'task')
     assert !remote.repo_local?
   end
 
   test "id is a unique ID" do
-    ids = (1..100).map { Heathrow::Task.new('adrian', 'abc123').id }
+    ids = (1..100).map { Heathrow::Task.new('adrian', 'abc123', 'task').id }
     assert_equal ids, ids.uniq
   end
 
@@ -110,6 +110,20 @@ class TaskTest < TestHelper
 
     state(@task).expects(:bundle_incomplete)
     @task.bundle_check
+  end
+
+  test "run_test fetches tag from repository and runs rake task" do
+    tree = Heathrow.test_tree = mock
+    tree.stubs(:git => (git = mock))
+    @task.stubs(:id => '123abc')
+
+    @repo.expects(:path).returns('/path/to/repo')
+    git.expects(:fetch_tags).with('/path/to/repo')
+    git.expects(:checkout).with('task-123abc')
+    tree.expects(:run).with('rake', 'test:task')
+
+    state(@task).expects(:test_complete)
+    @task.run_test
   end
 
   private

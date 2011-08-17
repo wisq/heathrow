@@ -12,7 +12,7 @@ class TaskIntegrationTest < TestHelper
   test "test using sample repository" do
     with_sample_repo do
       with_repository do
-        task = old_task = Heathrow::Task.new(@sample, 'branch1')
+        task = old_task = Heathrow::Task.new(@sample, 'branch1', 'sample:task')
         task.start
 
         task = Heathrow::Queue.local_fetch_queue.next
