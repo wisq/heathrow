@@ -8,6 +8,7 @@ class HeathrowTest < TestHelper
     Heathrow.store = nil
     Heathrow.repository = nil
     Heathrow.bundle_check_tree = nil
+    Heathrow.test_tree = nil
   end
 
   test "store defaults to Redis" do
@@ -39,5 +40,16 @@ class HeathrowTest < TestHelper
   test "bundle_check_tree can be set" do
     Heathrow.bundle_check_tree = tree = Heathrow::Tree.new('/nonexistent')
     assert_equal tree, Heathrow.bundle_check_tree
+  end
+
+  test "test_tree raises error if not set" do
+    assert_raises Heathrow::ConfigError do
+      Heathrow.test_tree
+    end
+  end
+
+  test "test_tree can be set" do
+    Heathrow.test_tree = tree = Heathrow::Tree.new('/nonexistent')
+    assert_equal tree, Heathrow.test_tree
   end
 end

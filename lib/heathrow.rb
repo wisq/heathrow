@@ -4,7 +4,7 @@ module Heathrow
   class ConfigError < StandardError; end
 
   class << self
-    attr_writer :store, :repository, :bundle_check_tree
+    attr_writer :store, :repository, :bundle_check_tree, :test_tree
 
     def store
       @store ||= Redis.new
@@ -16,6 +16,10 @@ module Heathrow
 
     def bundle_check_tree
       @bundle_check_tree or raise ConfigError, "No 'bundle check' tree set"
+    end
+
+    def test_tree
+      @test_tree or raise ConfigError, "No testing tree set"
     end
   end
 end
