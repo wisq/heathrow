@@ -12,7 +12,7 @@ class TaskIntegrationTest < TestHelper
   test "test using sample repository" do
     with_sample_repo do
       with_repository do
-        task = old_task = Heathrow::Task.new(@sample, 'branch1', 'sample:task')
+        task = old_task = Heathrow::Task.new(@sample, 'master', 'sample:success')
         task.start
 
         task = Heathrow::Queue.local_fetch_queue.next
@@ -25,6 +25,10 @@ class TaskIntegrationTest < TestHelper
 
         with_bundle_check_tree do
           task.bundle_check
+        end
+
+        with_test_tree do
+          task.run_test
         end
 
         # FIXME not done
@@ -56,5 +60,15 @@ class TaskIntegrationTest < TestHelper
     end
   ensure
     Heathrow.bundle_check_tree = nil
+  end
+
+  def with_test_tree
+    Dir.mktmpdir do |dir|
+      Heathrow.test_tree = tree = Heathrow::Tree.new(dir)
+      tree.run('git init -q')
+      yield
+    end
+  ensure
+    Heathrow.test_tree = nil
   end
 end

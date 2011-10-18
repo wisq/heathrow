@@ -6,8 +6,8 @@ require 'heathrow/git'
 require 'tmpdir'
 
 class GitTest < TestHelper
-  BRANCH_REV = '2fe0de0e0dcf423121e0b80b01f92ed8f36e66f0'
-  TAGGED_REV = '3df0799daa917c7fe40f723146a8a839fb6ec2c4'
+  BRANCH_REV = '6bc8bbc45a2196cc3cac1fb4d5e1877b8c6b35c7'
+  TAGGED_REV = 'c4c8f79eb7dc2b84abf393acdd97ae41512b7b00'
 
   def setup
     @path = @git = @sample = nil
