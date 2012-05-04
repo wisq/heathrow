@@ -2,22 +2,11 @@ require 'heathrow'
 require 'heathrow/base'
 
 class Heathrow::Client < Heathrow::Base
-  @@queues = {}
+  attr_reader :id, :username
 
-  def self.define_queue(id)
-    self.class.instance_eval do
-      define_method("#{id}_queue".to_sym) do
-        @@queues[id] ||= new(id)
-      end
-    end
-  end
-
-  [:remote_fetch, :local_fetch, :bundle_check, :bundle_install, :test].each { |q| define_queue(q) }
-
-  attr_reader :id
-
-  def initialize(id = generate_id)
-    @id = id
+  def initialize(username)
+    @id = generate_id
+    @username = username
   end
 
   def <<(output)
@@ -35,6 +24,10 @@ class Heathrow::Client < Heathrow::Base
     else
       raise "Unexpected key: #{key.inspect}"
     end
+  end
+
+  def read_nonblock
+    Heathrow.store.lpop(output_key)
   end
 
   def close

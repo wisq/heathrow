@@ -9,6 +9,8 @@ class Heathrow::Task < Heathrow::Base
     Marshal.load(Heathrow.store.get("task:#{id}"))
   end
 
+  attr_accessor :client
+
   def initialize(client, git_repo, git_id, rake_task)
     @client    = client
     @git_repo  = git_repo

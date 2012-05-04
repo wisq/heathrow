@@ -13,7 +13,7 @@ class TaskIntegrationTest < TestHelper
   test "test using sample repository" do
     with_sample_repo do
       with_repository do
-        client = Heathrow::Client.new
+        client = Heathrow::Client.new('user1')
 
         task = old_task = Heathrow::Task.new(client, @sample, 'master', 'sample:success')
         task.start
