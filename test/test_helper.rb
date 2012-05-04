@@ -20,4 +20,13 @@ class TestHelper < MiniTest::Unit::TestCase
       yield
     end
   end
+
+  def assert_raise(err)
+    begin
+      yield
+      assert false, "Expected to raise #{err}, raised nothing"
+    rescue Exception => e
+      assert_equal err, e.class, "Expected to raise #{err}, raised #{e.inspect}"
+    end
+  end
 end

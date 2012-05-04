@@ -1,9 +1,10 @@
 require 'heathrow'
+require 'heathrow/base'
 require 'heathrow/queue'
 
 require 'statemachine'
 
-class Heathrow::Task
+class Heathrow::Task < Heathrow::Base
   def self.find(id)
     Marshal.load(Heathrow.store.get("task:#{id}"))
   end
@@ -118,13 +119,6 @@ class Heathrow::Task
   end
 
   private
-
-  # Not a UUID because emphasis is on local uniqueness.
-  def generate_id
-    now = Time.now
-    parts = [now.to_i, now.usec, $$, rand(16**8)]
-    parts.map {|i| i.to_s(16)}.join('-')
-  end
 
   def tag_name
     "task-#{id}"

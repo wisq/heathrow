@@ -1,7 +1,5 @@
 require 'heathrow'
 
-require 'redis'
-
 class Heathrow::Queue
   @@queues = {}
 
