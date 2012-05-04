@@ -32,65 +32,86 @@ class QueueTest < TestHelper
     assert_equal task, Heathrow::Queue.bundle_check_queue.next
   end
 
-  test "#notify_client sends message to selected client based on task state and position" do
-    task1   = stub(:id => '123abc', :client => stub(:username => 'person1'), :queue_message => 'checking gems')
-    task2   = stub(:id => '456def', :client => stub(:username => 'person2'), :queue_message => 'checking gems')
-    task3   = stub(:id => '789fff', :client => stub(:username => 'person3'), :queue_message => 'checking gems')
-    Heathrow::Task.expects(:find).with(task1.id).at_least_once.returns(task1)
+  test "#current_task fetches current task from store" do
+    task = stub_task(1)
+
+    @store.expects(:get).with('queue:bundle_check:current').returns(task.id)
+    Heathrow::Task.expects(:find).with(task.id).returns(task)
+
+    assert_equal task, Heathrow::Queue.bundle_check_queue.current_task
+  end
+
+  test "#pending_tasks fetches all pending tasks from store" do
+    task1, task2, task3 = stub_tasks(3)
+
+    @store.expects(:lrange).with('queue:bundle_check', 0, -1).returns([task1.id, task2.id, task3.id])
+    Heathrow::Task.expects(:find).with(task1.id).returns(task1)
     Heathrow::Task.expects(:find).with(task2.id).returns(task2)
     Heathrow::Task.expects(:find).with(task3.id).returns(task3)
 
-    @store.expects(:get).with('queue:bundle_check:current').at_least_once.returns(task1.id)
-    @store.expects(:lrange).with('queue:bundle_check', 0, -1).returns([task2.id, task3.id])
+    assert_equal [task1, task2, task3], Heathrow::Queue.bundle_check_queue.pending_tasks
+  end
 
-    task3.client.expects(:<<).with("You are #3 in line for checking gems.  (Ahead of you: person2, person1.)")
+  test "#notify_client sends message to selected client based on task state and position" do
+    @queue_message = 'checking gems'
+    task1, task2, task3 = stub_tasks(3)
 
-    Heathrow::Queue.bundle_check_queue.notify_client(task3)
+    with_queue(:bundle_check, task1, [task2, task3]) do |queue|
+      task3.client.expects(:<<).with("You are #3 in line for checking gems.  (Ahead of you: person2, person1.)")
+      queue.notify_client(task3)
+    end
   end
 
   test "#notify_client does not send message if client has already been picked up by a worker" do
-    client = stub(:username => 'person1')
-    task   = stub(:id => 'abc123', :client => client, :queue_message => 'none')
+    task1, task2, task3 = stub_tasks(3)
 
-    Heathrow::Task.expects(:find).with(task.id).returns(task)
-    @store.expects(:get).with('queue:local_fetch:current').returns(task.id)
-    @store.expects(:lrange).never
+    with_queue(:local_fetch, task1, [task2, task3]) do |queue|
+      task1.client.expects(:<<).never
+      queue.notify_client(task1)
+    end
 
-    client.expects(:<<).never
-
-    Heathrow::Queue.local_fetch_queue.notify_client(task)
   end
 
   test "#notify_client does not send message if client has already been completed" do
-    client1 = stub(:username => 'person1')
-    client2 = stub(:username => 'person2')
-    task1   = stub(:id => '123abc', :client => client1)
-    task2   = stub(:id => '456def', :client => client2)
+    task1, task2, task3 = stub_tasks(3)
 
-    Heathrow::Task.expects(:find).with(task1.id).never
-    Heathrow::Task.expects(:find).with(task2.id).returns(task2)
-    @store.expects(:get).with('queue:local_fetch:current').at_least_once.returns(nil)
-    @store.expects(:lrange).with('queue:local_fetch', 0, -1).returns([task2.id])
-
-    client1.expects(:<<).never
-
-    Heathrow::Queue.local_fetch_queue.notify_client(task1)
+    with_queue(:local_fetch, task2, [task3]) do |queue|
+      task1.client.expects(:<<).never
+      queue.notify_client(task1)
+    end
   end
 
   test "#notify_pending sends message to all waiting clients based on position" do
-    client1 = stub(:username => 'person1')
-    client2 = stub(:username => 'person2')
-    client3 = stub(:username => 'person3')
-    Heathrow::Task.expects(:find).with('123abc').returns(stub(:id => '123abc', :client => client1, :queue_message => 'testing'))
-    Heathrow::Task.expects(:find).with('456def').returns(stub(:id => '456def', :client => client2, :queue_message => 'testing'))
-    Heathrow::Task.expects(:find).with('789fff').returns(stub(:id => '789fff', :client => client3, :queue_message => 'testing'))
+    @queue_message = 'testing'
+    task1, task2, task3 = stub_tasks(3)
 
-    @store.expects(:get).with('queue:test:current').at_least_once.returns('123abc')
-    @store.expects(:lrange).with('queue:test', 0, -1).returns(['456def', '789fff'])
+    with_queue(:test, task1, [task2, task3]) do |queue|
+      task1.client.expects(:<<).never
+      task2.client.expects(:<<).with("You are #2 in line for testing.  (Ahead of you: person1.)")
+      task3.client.expects(:<<).with("You are #3 in line for testing.  (Ahead of you: person2, person1.)")
+      queue.notify_pending
+    end
+  end
 
-    client1.expects(:<<).never
-    client2.expects(:<<).with("You are #2 in line for testing.  (Ahead of you: person1.)")
-    client3.expects(:<<).with("You are #3 in line for testing.  (Ahead of you: person2, person1.)")
-    Heathrow::Queue.test_queue.notify_pending
+  private
+
+  def with_queue(name, current, pending)
+    queue = Heathrow::Queue.send("#{name}_queue".to_sym)
+    queue.stubs(:current_task).returns(current)
+    queue.stubs(:pending_tasks).returns(pending)
+    yield queue
+  end
+
+  def stub_task(number)
+    client = stub(:username => "person#{number}")
+    stub(
+      :id => "task#{number}",
+      :client => client,
+      :queue_message => @queue_message
+    )
+  end
+
+  def stub_tasks(count)
+    (1..count).map { |i| stub_task(i) }
   end
 end

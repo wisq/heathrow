@@ -57,16 +57,6 @@ class Heathrow::Queue
     end
   end
 
-  private
-
-  def redis_key
-    "queue:#{id}"
-  end
-
-  def current_key
-    "#{redis_key}:current"
-  end
-
   def all_tasks
     ([current_task] + pending_tasks).compact
   end
@@ -79,5 +69,15 @@ class Heathrow::Queue
 
   def pending_tasks
     Heathrow.store.lrange(redis_key, 0, -1).map { |id| Heathrow::Task.find(id) }
+  end
+
+  private
+
+  def redis_key
+    "queue:#{id}"
+  end
+
+  def current_key
+    "#{redis_key}:current"
   end
 end
