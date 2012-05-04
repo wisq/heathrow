@@ -22,6 +22,7 @@ class Heathrow::Queue
   def <<(task)
     task.save
     Heathrow.store.rpush(redis_key, task.id)
+    notify_client(task)
   end
 
   def next
@@ -29,28 +30,31 @@ class Heathrow::Queue
     store.del(current_key)
     task = Heathrow::Task.find(Heathrow.store.blpop(redis_key, 0).last)
     store.set(current_key, task.id)
+    notify_pending
     task
   end
 
-  def notify_client(client, action, ahead = nil)
-    ahead ||= all_tasks.map(&:client).take_while { |c| c.id != client.id }.map(&:username).reverse
-    client << "You are ##{ahead.count} in line for #{action}.  (Ahead of you: #{ahead.join(', ')}.)"
+  def notify_client(task, ahead = nil)
+    if ahead.nil?
+      return if task == current_task
+
+      tasks = all_tasks
+      ahead = tasks.take_while { |t| t != task }.map(&:client).map(&:username).reverse
+      return if tasks.count == ahead.count # we're not in all_tasks; already completed?
+    end
+
+    task.client << "You are ##{ahead.count + 1} in line for #{task.queue_message}.  (Ahead of you: #{ahead.join(', ')}.)"
   end
 
-  def notify_pending(action)
-    current = Heathrow.store.get(current_key)
-    ahead = []
+  def notify_pending
+    ahead   = []
+    current = current_task
+    ahead << current.client.username if current
 
-    all_tasks.each do |task|
-      notify_client(task.client, action, ahead) unless task.id == current
+    pending_tasks.each do |task|
+      notify_client(task, ahead)
       ahead.unshift(task.client.username)
     end
-  end
-
-  def all_tasks
-    current = Heathrow.store.get(current_key)
-    pending = Heathrow.store.lrange(redis_key, 0, -1)
-    users = ([current] + pending).compact.map { |id| Heathrow::Task.find(id) }
   end
 
   private
@@ -61,5 +65,19 @@ class Heathrow::Queue
 
   def current_key
     "#{redis_key}:current"
+  end
+
+  def all_tasks
+    ([current_task] + pending_tasks).compact
+  end
+
+  def current_task
+    id = Heathrow.store.get(current_key)
+    return nil if id.nil?
+    Heathrow::Task.find(id)
+  end
+
+  def pending_tasks
+    Heathrow.store.lrange(redis_key, 0, -1).map { |id| Heathrow::Task.find(id) }
   end
 end

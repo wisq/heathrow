@@ -68,6 +68,17 @@ class Heathrow::Task < Heathrow::Base
     Heathrow::Git.repo_local?(@git_repo)
   end
 
+  def queue_message
+    case @state.state
+    when :incoming          then 'initial processing'
+    when :remote_fetching   then 'remote fetching'
+    when :local_fetching    then 'copying'
+    when :bundle_checking   then 'checking gems'
+    when :bundle_installing then 'installing gems'
+    when :testing           then 'testing'
+    end
+  end
+
   def save
     Heathrow.store.set("task:#{id}", Marshal.dump(self))
   end
