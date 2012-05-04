@@ -2,6 +2,7 @@ require 'minitest/autorun'
 
 require 'test_helper'
 require 'heathrow/task'
+require 'heathrow/client'
 
 class TaskIntegrationTest < TestHelper
   def setup
@@ -12,7 +13,9 @@ class TaskIntegrationTest < TestHelper
   test "test using sample repository" do
     with_sample_repo do
       with_repository do
-        task = old_task = Heathrow::Task.new(@sample, 'master', 'sample:success')
+        client = Heathrow::Client.new
+
+        task = old_task = Heathrow::Task.new(client, @sample, 'master', 'sample:success')
         task.start
 
         task = Heathrow::Queue.local_fetch_queue.next
